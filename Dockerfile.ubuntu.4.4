@@ -1,0 +1,30 @@
+# This container requires a private npm repo
+# See https://blog.risingstack.com/private-npm-with-docker/
+# See https://github.com/nodesource/docker-node/tree/master/ubuntu/trusty/node/4.4.0 for ubuntu images
+# 
+# Building from the project root folder:
+#
+# 1. export NPM_TOKEN=......
+# 2. cp dockerfiles/.npmrc ./
+# 2. docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -f Dockerfile.alpine.4.4 -t socius/$(cat package.json | jq '.name' | tr -d '"'):$(cat package.json | jq '.version' | tr -d '"') .
+#
+# Using: docker run -it --rm --name <packagename> socius/<packagename>:latest 
+
+FROM nodesource/trusty:4.4.0
+
+MAINTAINER Samuel Cozannet <samuel@blended.io>
+
+ENV NODE_ENV "production"
+ARG NPM_TOKEN
+
+COPY . .
+
+COPY .npmrc /root/.npmrc
+
+RUN npm install && \
+	rm -f /root/.npmrc && \
+	rm -f .npmrc
+
+RUN npm install -g nodemon
+
+CMD ["npm","start"]
