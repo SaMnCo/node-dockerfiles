@@ -1,0 +1,42 @@
+# This container requires a private npm repo
+# See https://blog.risingstack.com/private-npm-with-docker/
+# See https://github.com/nodesource/docker-node/tree/master/ubuntu/trusty/node/4.4.0 for ubuntu images
+# 
+# Building from the project root folder:
+#
+# 1. export NPM_TOKEN=......
+# 2. cp dockerfiles/.npmrc ./
+# 2. docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -f Dockerfile.alpine.4.4 -t socius/$(cat package.json | jq '.name' | tr -d '"'):$(cat package.json | jq '.version' | tr -d '"') .
+#
+# Using: docker run -it --rm --name <packagename> socius/<packagename>:latest 
+
+FROM samnco/xenial-base
+MAINTAINER Samuel Cozannet <samuel.cozannet@madeden.com>
+
+ENV NODE_ENV "production"
+ARG NPM_TOKEN
+WORKDIR /usr/src/app
+
+RUN curl https://deb.nodesource.com/node_4.x/pool/main/n/nodejs/nodejs_4.4.4-1nodesource1~xenial1_amd64.deb > node.deb \
+ && dpkg -i node.deb \
+ && rm node.deb
+
+RUN npm install -g pangyp \
+ && ln -s $(which pangyp) $(dirname $(which pangyp))/node-gyp \
+ && npm cache clear \
+ && node-gyp configure || echo ""
+
+RUN apt update \
+ && apt upgrade -y --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+ && apt remove --purge -y binutils krb5* libkrb5* \
+ && rm -rf /var/lib/apt/lists/*;
+
+COPY . .
+
+COPY .npmrc /root/.npmrc
+
+RUN npm install && \
+	rm -f /root/.npmrc && \
+	rm -f .npmrc
+
+CMD [ "run.sh" ]
