@@ -10,7 +10,7 @@
 #
 # Using: docker run -it --rm --name <packagename> socius/<packagename>:latest 
 
-FROM nodesource/trusty:4.4.0
+FROM nodesource/trusty:4.4.4
 
 MAINTAINER Samuel Cozannet <samuel@blended.io>
 
@@ -25,6 +25,4 @@ RUN npm install && \
 	rm -f /root/.npmrc && \
 	rm -f .npmrc
 
-RUN npm install -g nodemon
-
-CMD ["npm","start"]
+CMD [ "run.sh" ]  
